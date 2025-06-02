@@ -1,0 +1,230 @@
+<!DOCTYPE html><html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Café Tycoon</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #fdf6e3;
+      color: #4b2e2e;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+    }
+    #money {
+      font-size: 2rem;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      margin: 1rem;
+      background: #d9a066;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #e0b473;
+    }
+    .upgrade {
+      background: #eee;
+      margin: 1rem auto;
+      max-width: 300px;
+      border-radius: 10px;
+      padding: 1rem;
+    }
+    .section {
+      margin-top: 2rem;
+    }
+    .coffee-anim {
+      font-size: 3rem;
+      animation: floatUp 1s ease-out;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    @keyframes floatUp {
+      0% { top: 60%; opacity: 1; }
+      100% { top: 20%; opacity: 0; }
+    }
+    audio { display: none; }
+  </style>
+</head>
+<body>
+  <h1>☕ Café Tycoon</h1>
+  <div id="money">Dinero: $0</div>
+  <button onclick="sellCoffee()">Vender Café ☕</button>  <div class="section">
+    <h2>🔧 Mejoras</h2>
+    <div class="upgrade">
+      <p>+1 por clic - Precio: $<span id="clickCost">20</span></p>
+      <button onclick="buyClickUpgrade()">Comprar</button>
+    </div>
+    <div class="upgrade">
+      <p>+1 por segundo - Precio: $<span id="autoCost">50</span></p>
+      <button onclick="buyAutoUpgrade()">Comprar</button>
+    </div>
+    <div class="upgrade">
+      <p>Contratar Barista (+5/s) - Precio: $200</p>
+      <button onclick="hireBarista()">Contratar</button>
+    </div>
+    <div class="upgrade">
+      <p>Añadir Pasteles (duplica clic) - Precio: $500</p>
+      <button onclick="buyPastry()">Comprar</button>
+    </div>
+  </div>  <div class="section">
+    <h2>📊 Estadísticas</h2>
+    <p>Cafés vendidos: <span id="cafes">0</span></p>
+    <p>Ingreso por clic: $<span id="perClick">1</span></p>
+    <p>Ingreso por segundo: $<span id="perSecond">0</span></p>
+    <p>Baristas: <span id="baristas">0</span></p>
+    <p>Pastelería: <span id="pastry">No</span></p>
+  </div>  <div class="section">
+    <button onclick="resetGame()">🔁 Reiniciar Juego</button>
+  </div>  <div id="animation-container"></div>
+  <audio id="clickSound" src="https://www.soundjay.com/button/beep-07.wav"></audio>
+  <audio id="bgMusic" src="https://www.bensound.com/bensound-music/bensound-buddy.mp3" loop autoplay></audio>  <script>
+    let money = 0;
+    let perClick = 1;
+    let perSecond = 0;
+    let cafes = 0;
+    let baristas = 0;
+    let hasPastry = false;
+
+    function updateDisplay() {
+      document.getElementById("money").innerText = `Dinero: $${money.toFixed(0)}`;
+      document.getElementById("cafes").innerText = cafes;
+      document.getElementById("perClick").innerText = perClick;
+      document.getElementById("perSecond").innerText = perSecond;
+      document.getElementById("clickCost").innerText = 20 + perClick * 15;
+      document.getElementById("autoCost").innerText = 50 + perSecond * 40;
+      document.getElementById("baristas").innerText = baristas;
+      document.getElementById("pastry").innerText = hasPastry ? "Sí" : "No";
+    }
+
+    function showCoffeeAnim() {
+      const anim = document.createElement("div");
+      anim.className = "coffee-anim";
+      anim.innerText = "☕";
+      document.getElementById("animation-container").appendChild(anim);
+      setTimeout(() => anim.remove(), 1000);
+    }
+
+    function playSound() {
+      const sound = document.getElementById("clickSound");
+      sound.currentTime = 0;
+      sound.play();
+    }
+
+    function sellCoffee() {
+      money += perClick;
+      cafes++;
+      updateDisplay();
+      saveGame();
+      showCoffeeAnim();
+      playSound();
+    }
+
+    function buyClickUpgrade() {
+      const cost = 20 + perClick * 15;
+      if (money >= cost) {
+        money -= cost;
+        perClick++;
+        updateDisplay();
+        saveGame();
+      } else {
+        alert("No tienes suficiente dinero.");
+      }
+    }
+
+    function buyAutoUpgrade() {
+      const cost = 50 + perSecond * 40;
+      if (money >= cost) {
+        money -= cost;
+        perSecond++;
+        updateDisplay();
+        saveGame();
+      } else {
+        alert("No tienes suficiente dinero.");
+      }
+    }
+
+    function hireBarista() {
+      const cost = 200;
+      if (money >= cost) {
+        money -= cost;
+        baristas++;
+        perSecond += 5;
+        updateDisplay();
+        saveGame();
+      } else {
+        alert("No tienes suficiente dinero para contratar un barista.");
+      }
+    }
+
+    function buyPastry() {
+      const cost = 500;
+      if (!hasPastry && money >= cost) {
+        money -= cost;
+        hasPastry = true;
+        perClick *= 2;
+        updateDisplay();
+        saveGame();
+      } else if (hasPastry) {
+        alert("Ya tienes pastelería instalada.");
+      } else {
+        alert("No tienes suficiente dinero para añadir pastelería.");
+      }
+    }
+
+    function resetGame() {
+      if (confirm("¿Seguro que quieres reiniciar el juego?")) {
+        money = 0;
+        perClick = 1;
+        perSecond = 0;
+        cafes = 0;
+        baristas = 0;
+        hasPastry = false;
+        updateDisplay();
+        saveGame();
+      }
+    }
+
+    setInterval(() => {
+      money += perSecond;
+      updateDisplay();
+      saveGame();
+    }, 1000);
+
+    function saveGame() {
+      const gameData = {
+        money,
+        perClick,
+        perSecond,
+        cafes,
+        baristas,
+        hasPastry
+      };
+      localStorage.setItem("cafeTycoonSave", JSON.stringify(gameData));
+    }
+
+    function loadGame() {
+      const save = localStorage.getItem("cafeTycoonSave");
+      if (save) {
+        const data = JSON.parse(save);
+        money = data.money || 0;
+        perClick = data.perClick || 1;
+        perSecond = data.perSecond || 0;
+        cafes = data.cafes || 0;
+        baristas = data.baristas || 0;
+        hasPastry = data.hasPastry || false;
+        updateDisplay();
+      }
+    }
+
+    loadGame();
+  </script></body>
+</html>
